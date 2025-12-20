@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Missed Call Auto-Reply</string>
+
+    <!-- Main Screen -->
+    <string name="auto_reply_active">Auto-reply active during work hours</string>
+    <string name="auto_reply_inactive">Auto-reply is disabled</string>
+    <string name="enable_auto_reply">Enable Auto-Reply</string>
+    <string name="edit_message">Edit Message</string>
+    <string name="active_hours">Active Hours</string>
+    <string name="usage">Usage</string>
+    <string name="settings">Settings</string>
+
+    <!-- Message Editor -->
+    <string name="message_label">Auto-reply message:</string>
+    <string name="default_message">Hi! I missed your call and I\'m working right now. I\'ll call you back as soon as I can. Thanks!</string>
+    <string name="reset_to_default">Reset to Default</string>
+    <string name="save">Save</string>
+    <string name="character_count">%d / 160 characters</string>
+    <string name="message_saved">Message saved successfully</string>
+
+    <!-- Active Hours -->
+    <string name="start_time">Start Time</string>
+    <string name="end_time">End Time</string>
+    <string name="always_on">Always On</string>
+    <string name="active_hours_saved">Active hours saved successfully</string>
+    <string name="select_time">Select Time</string>
+
+    <!-- Usage Screen -->
+    <string name="usage_title">Auto-Reply Usage</string>
+    <string name="usage_count">You\'ve used %d of 5 free auto-texts</string>
+    <string name="usage_unlimited">Unlimited auto-texts enabled</string>
+    <string name="upgrade_now">Upgrade to Unlimited</string>
+    <string name="limit_reached">Limit Reached</string>
+    <string name="limit_message">You\'ve reached your free limit of 5 auto-texts. Upgrade to continue using auto-reply.</string>
+
+    <!-- Permissions -->
+    <string name="permission_rationale">This app needs phone and SMS permissions to automatically reply to missed calls.</string>
+    <string name="grant_permissions">Grant Permissions</string>
+    <string name="permissions_required">Permissions Required</string>
+    <string name="battery_optimization_title">Battery Optimization</string>
+    <string name="battery_optimization_message">To ensure auto-reply works reliably, please disable battery optimization for this app.</string>
+    <string name="disable_battery_optimization">Disable Battery Optimization</string>
+
+    <!-- Service Notification -->
+    <string name="service_notification_title">Auto-reply active</string>
+    <string name="service_notification_text">Monitoring for missed calls</string>
+    <string name="notification_channel_name">Call Monitoring</string>
+    <string name="notification_channel_description">Notification for active call monitoring service</string>
+
+    <!-- Misc -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+</resources>
