@@ -1,22 +1,30 @@
-package com.mctb.autoreply
+package com.mctb.autoreply.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.telephony.TelephonyManager
 import android.util.Log
+import com.mctb.autoreply.util.SmsHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
- * BroadcastReceiver that listens for phone state changes
- * Detects missed calls and triggers auto-reply SMS
+ * BroadcastReceiver that listens for phone state changes to detect missed calls.
+ *
+ * This receiver is triggered by the PHONE_STATE intent and tracks call state
+ * transitions to identify when a call goes from RINGING to IDLE without ever
+ * reaching OFFHOOK (answered), which indicates a missed call.
+ *
+ * When a missed call is detected, it delegates to SmsHandler to send the auto-reply.
  */
 class CallReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "CallReceiver"
+
+        // Track call state across broadcasts
         private var lastState = TelephonyManager.CALL_STATE_IDLE
         private var isIncoming = false
         private var incomingNumber: String? = null
@@ -25,23 +33,26 @@ class CallReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context == null || intent == null) return
 
-        try {
-            // Get the current call state
-            val state = intent.getStringExtra(TelephonyManager.EXTRA_STATE)
-            val incomingNumberExtra = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
+        if (intent.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED) return
 
-            Log.d(TAG, "Call state changed: $state, Number: $incomingNumberExtra")
+        try {
+            val state = intent.getStringExtra(TelephonyManager.EXTRA_STATE)
+            val phoneNumber = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
+
+            Log.d(TAG, "Phone state changed: $state, Number: $phoneNumber")
 
             when (state) {
                 TelephonyManager.EXTRA_STATE_RINGING -> {
-                    // Incoming call is ringing
+                    // Call is ringing (incoming call)
                     isIncoming = true
-                    incomingNumber = incomingNumberExtra
-                    Log.d(TAG, "Incoming call from: $incomingNumber")
+                    incomingNumber = phoneNumber
+                    lastState = TelephonyManager.CALL_STATE_RINGING
+                    Log.d(TAG, "Incoming call from: $phoneNumber")
                 }
 
                 TelephonyManager.EXTRA_STATE_OFFHOOK -> {
                     // Call was answered
+                    lastState = TelephonyManager.CALL_STATE_OFFHOOK
                     if (isIncoming) {
                         Log.d(TAG, "Call answered")
                     }
@@ -59,16 +70,10 @@ class CallReceiver : BroadcastReceiver() {
                     }
 
                     // Reset state
+                    lastState = TelephonyManager.CALL_STATE_IDLE
                     isIncoming = false
                     incomingNumber = null
                 }
-            }
-
-            // Update last state
-            lastState = when (state) {
-                TelephonyManager.EXTRA_STATE_RINGING -> TelephonyManager.CALL_STATE_RINGING
-                TelephonyManager.EXTRA_STATE_OFFHOOK -> TelephonyManager.CALL_STATE_OFFHOOK
-                else -> TelephonyManager.CALL_STATE_IDLE
             }
 
         } catch (e: Exception) {
@@ -77,19 +82,19 @@ class CallReceiver : BroadcastReceiver() {
     }
 
     /**
-     * Handle a missed call by sending auto-reply SMS
+     * Handle a missed call by sending an auto-reply SMS.
+     * Uses a coroutine to avoid blocking the BroadcastReceiver.
      */
     private fun handleMissedCall(context: Context, phoneNumber: String) {
-        // Use coroutine to avoid blocking the BroadcastReceiver
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val smsSender = SmsSender(context)
-                val success = smsSender.processMissedCall(phoneNumber)
+                val smsHandler = SmsHandler(context)
+                val success = smsHandler.processMissedCall(phoneNumber)
 
                 if (success) {
                     Log.i(TAG, "Auto-reply sent for missed call from: $phoneNumber")
                 } else {
-                    Log.w(TAG, "Auto-reply not sent for missed call from: $phoneNumber")
+                    Log.d(TAG, "Auto-reply not sent for missed call from: $phoneNumber")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error handling missed call", e)

@@ -1,54 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Missed Call Auto-Reply</string>
+    <string name="app_name">Auto-Reply</string>
 
-    <!-- Main Screen -->
-    <string name="auto_reply_active">Auto-reply active during work hours</string>
-    <string name="auto_reply_inactive">Auto-reply is disabled</string>
+    <!-- Home Screen -->
     <string name="enable_auto_reply">Enable Auto-Reply</string>
-    <string name="edit_message">Edit Message</string>
-    <string name="active_hours">Active Hours</string>
-    <string name="usage">Usage</string>
-    <string name="settings">Settings</string>
+    <string name="status_active">Auto-reply is active during work hours</string>
+    <string name="status_inactive">Auto-reply is turned off</string>
+    <string name="usage_label">Usage</string>
+    <string name="usage_count">%1$d / %2$d free texts used</string>
+    <string name="usage_unlimited">Unlimited</string>
+    <string name="configure_message">Configure Message</string>
+    <string name="configure_hours">Configure Hours</string>
+    <string name="view_usage">View Usage</string>
 
     <!-- Message Editor -->
-    <string name="message_label">Auto-reply message:</string>
-    <string name="default_message">Hi! I missed your call and I\'m working right now. I\'ll call you back as soon as I can. Thanks!</string>
-    <string name="reset_to_default">Reset to Default</string>
+    <string name="message_editor_title">Auto-Reply Message</string>
+    <string name="message_hint">Enter your auto-reply message</string>
+    <string name="char_count">%1$d / 160 characters</string>
+    <string name="reset_default">Reset to Default</string>
     <string name="save">Save</string>
-    <string name="character_count">%d / 160 characters</string>
+    <string name="default_message">Hi! I missed your call and I\'m working right now. I\'ll call you back as soon as I can. Thanks!</string>
     <string name="message_saved">Message saved successfully</string>
+    <string name="message_empty_error">Message cannot be empty</string>
 
     <!-- Active Hours -->
+    <string name="active_hours_title">Active Hours</string>
+    <string name="always_active">Always Active</string>
+    <string name="always_active_desc">Send auto-replies 24/7</string>
     <string name="start_time">Start Time</string>
     <string name="end_time">End Time</string>
-    <string name="always_on">Always On</string>
-    <string name="active_hours_saved">Active hours saved successfully</string>
-    <string name="select_time">Select Time</string>
+    <string name="time_format">%02d:%02d</string>
+    <string name="active_hours_desc">Auto-replies will only be sent during these hours</string>
+    <string name="hours_saved">Hours saved successfully</string>
 
     <!-- Usage Screen -->
-    <string name="usage_title">Auto-Reply Usage</string>
-    <string name="usage_count">You\'ve used %d of 5 free auto-texts</string>
-    <string name="usage_unlimited">Unlimited auto-texts enabled</string>
-    <string name="upgrade_now">Upgrade to Unlimited</string>
-    <string name="limit_reached">Limit Reached</string>
-    <string name="limit_message">You\'ve reached your free limit of 5 auto-texts. Upgrade to continue using auto-reply.</string>
+    <string name="usage_title">Usage &amp; Limits</string>
+    <string name="free_tier_title">Free Tier</string>
+    <string name="free_tier_desc">You get 5 free automated text messages. After that, upgrade to continue using auto-reply.</string>
+    <string name="limit_reached_title">Limit Reached</string>
+    <string name="limit_reached_desc">You\'ve used all 5 free auto-texts. Upgrade to unlimited to continue.</string>
+    <string name="upgrade_button">Upgrade to Unlimited</string>
+    <string name="upgrade_placeholder">Payment integration coming soon</string>
 
     <!-- Permissions -->
-    <string name="permission_rationale">This app needs phone and SMS permissions to automatically reply to missed calls.</string>
+    <string name="permissions_required_title">Permissions Required</string>
+    <string name="permissions_required_desc">This app needs the following permissions to function:\n\n• Phone State - Detect incoming calls\n• Call Log - Identify missed calls\n• Send SMS - Send auto-reply messages\n• Notifications - Show service status</string>
     <string name="grant_permissions">Grant Permissions</string>
-    <string name="permissions_required">Permissions Required</string>
+    <string name="permission_denied">Permission denied. The app won\'t work without required permissions.</string>
+
+    <!-- Battery Optimization -->
     <string name="battery_optimization_title">Battery Optimization</string>
-    <string name="battery_optimization_message">To ensure auto-reply works reliably, please disable battery optimization for this app.</string>
-    <string name="disable_battery_optimization">Disable Battery Optimization</string>
+    <string name="battery_optimization_desc">For reliable operation, please disable battery optimization for this app.</string>
+    <string name="disable_optimization">Disable Optimization</string>
 
     <!-- Service Notification -->
-    <string name="service_notification_title">Auto-reply active</string>
-    <string name="service_notification_text">Monitoring for missed calls</string>
     <string name="notification_channel_name">Call Monitoring</string>
-    <string name="notification_channel_description">Notification for active call monitoring service</string>
+    <string name="notification_channel_desc">Persistent notification while monitoring for missed calls</string>
+    <string name="notification_title">Auto-reply active</string>
+    <string name="notification_text">Monitoring for missed calls</string>
 
-    <!-- Misc -->
+    <!-- Common -->
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
+    <string name="back">Back</string>
 </resources>

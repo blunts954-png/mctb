@@ -1,5 +1,6 @@
-package com.mctb.autoreply
+package com.mctb.autoreply.service
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -10,10 +11,22 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.mctb.autoreply.R
+import com.mctb.autoreply.ui.MainActivity
 
 /**
- * Foreground service that keeps the app alive for monitoring missed calls
- * Displays a persistent notification to prevent Android from killing the service
+ * Foreground service that keeps the app alive for reliable call monitoring.
+ *
+ * Android's aggressive battery optimization can kill background processes,
+ * which would prevent our BroadcastReceiver from receiving call state changes.
+ * Running as a foreground service with a persistent notification ensures that:
+ *
+ * 1. The app process stays alive
+ * 2. The CallReceiver can reliably receive PHONE_STATE broadcasts
+ * 3. The system won't kill the app during device sleep
+ *
+ * This service displays a minimal, low-priority notification to comply with
+ * Android's foreground service requirements.
  */
 class CallMonitorService : Service() {
 
@@ -23,7 +36,8 @@ class CallMonitorService : Service() {
         private const val CHANNEL_ID = "call_monitor_channel"
 
         /**
-         * Start the monitoring service
+         * Start the monitoring service.
+         * Handles API level differences for starting foreground services.
          */
         fun start(context: Context) {
             val intent = Intent(context, CallMonitorService::class.java)
@@ -35,7 +49,7 @@ class CallMonitorService : Service() {
         }
 
         /**
-         * Stop the monitoring service
+         * Stop the monitoring service.
          */
         fun stop(context: Context) {
             val intent = Intent(context, CallMonitorService::class.java)
@@ -52,16 +66,16 @@ class CallMonitorService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "Service started")
 
-        // Start foreground service with notification
+        // Start foreground service with persistent notification
         val notification = createNotification()
         startForeground(NOTIFICATION_ID, notification)
 
-        // Return sticky so service restarts if killed
+        // Return START_STICKY so service restarts if killed by system
         return START_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        // We don't provide binding, so return null
+        // This service doesn't support binding
         return null
     }
 
@@ -71,7 +85,8 @@ class CallMonitorService : Service() {
     }
 
     /**
-     * Create notification channel for Android O and above
+     * Create notification channel for Android 8.0 and above.
+     * Required for posting foreground service notifications.
      */
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -80,8 +95,10 @@ class CallMonitorService : Service() {
                 getString(R.string.notification_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = getString(R.string.notification_channel_description)
+                description = getString(R.string.notification_channel_desc)
                 setShowBadge(false)
+                enableLights(false)
+                enableVibration(false)
             }
 
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -90,9 +107,10 @@ class CallMonitorService : Service() {
     }
 
     /**
-     * Create the persistent notification for foreground service
+     * Create the persistent notification for foreground service.
+     * Uses low priority to minimize user distraction.
      */
-    private fun createNotification(): android.app.Notification {
+    private fun createNotification(): Notification {
         // Intent to open app when notification is tapped
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
@@ -103,13 +121,14 @@ class CallMonitorService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.service_notification_title))
-            .setContentText(getString(R.string.service_notification_text))
+            .setContentTitle(getString(R.string.notification_title))
+            .setContentText(getString(R.string.notification_text))
             .setSmallIcon(android.R.drawable.ic_menu_call)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build()
     }
 }
