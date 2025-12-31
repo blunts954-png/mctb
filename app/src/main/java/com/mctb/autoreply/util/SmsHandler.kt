@@ -2,8 +2,8 @@ package com.mctb.autoreply.util
 
 import android.content.Context
 import android.telephony.SmsManager
-import android.util.Log
 import com.mctb.autoreply.data.AppPreferences
+import timber.log.Timber
 
 /**
  * Handles SMS sending with validation, debounce, and limit enforcement.
@@ -14,10 +14,6 @@ class SmsHandler(private val context: Context) {
 
     private val prefs = AppPreferences(context)
 
-    companion object {
-        private const val TAG = "SmsHandler"
-    }
-
     /**
      * Process a missed call and send auto-reply if appropriate.
      * This is the main entry point called by the CallReceiver.
@@ -27,42 +23,42 @@ class SmsHandler(private val context: Context) {
      */
     suspend fun processMissedCall(phoneNumber: String): Boolean {
         try {
-            Log.i(TAG, "Processing missed call from: $phoneNumber")
+            Timber.i("Processing missed call from: %s", phoneNumber)
 
             // Validate phone number
             if (!isValidPhoneNumber(phoneNumber)) {
-                Log.w(TAG, "Invalid or blocked phone number: $phoneNumber")
+                Timber.w("Invalid or blocked phone number: %s", phoneNumber)
                 return false
             }
 
             // Check if app is enabled
             if (!prefs.isEnabledSync()) {
-                Log.d(TAG, "Auto-reply is disabled")
+                Timber.d("Auto-reply is disabled")
                 return false
             }
 
             // Check active hours
             if (!prefs.isWithinActiveHours()) {
-                Log.d(TAG, "Outside active hours")
+                Timber.d("Outside active hours")
                 return false
             }
 
             // Check free tier limit
             if (prefs.hasReachedLimit()) {
-                Log.w(TAG, "Free tier limit reached")
+                Timber.w("Free tier limit reached (count: %d)", prefs.getAutoTextCountSync())
                 return false
             }
 
             // Check debounce
             if (!prefs.canSendToNumber(phoneNumber)) {
-                Log.d(TAG, "Recently texted this number, skipping (debounce)")
+                Timber.d("Recently texted this number, skipping (debounce)")
                 return false
             }
 
             // Get message
             val message = prefs.getMessageSync()
             if (message.isBlank()) {
-                Log.w(TAG, "Message is blank, cannot send")
+                Timber.w("Message is blank, cannot send")
                 return false
             }
 
@@ -77,13 +73,21 @@ class SmsHandler(private val context: Context) {
                 prefs.recordTextSent(phoneNumber)
 
                 val count = prefs.getAutoTextCountSync()
-                Log.i(TAG, "Auto-reply sent successfully. Total count: $count")
+                Timber.i("Auto-reply sent successfully. Total count: %d", count)
+            } else {
+                Timber.w("Failed to send SMS to %s", phoneNumber)
             }
 
             return success
 
+        } catch (e: SecurityException) {
+            Timber.e(e, "Security exception - missing permissions for SMS")
+            return false
+        } catch (e: IllegalArgumentException) {
+            Timber.e(e, "Invalid arguments when processing call from %s", phoneNumber)
+            return false
         } catch (e: Exception) {
-            Log.e(TAG, "Error processing missed call", e)
+            Timber.e(e, "Unexpected error processing missed call from %s", phoneNumber)
             return false
         }
     }
@@ -99,9 +103,15 @@ class SmsHandler(private val context: Context) {
         return try {
             val smsManager = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                 context.getSystemService(SmsManager::class.java)
+                    ?: throw IllegalStateException("SmsManager service not available")
             } else {
                 @Suppress("DEPRECATION")
                 SmsManager.getDefault()
+            }
+
+            // Validate message length (SMS limit is 160 characters for single message)
+            if (message.length > 160) {
+                Timber.w("Message exceeds 160 characters, may be sent as multiple SMS")
             }
 
             // Send the message
@@ -113,11 +123,20 @@ class SmsHandler(private val context: Context) {
                 null  // No delivery intent for now
             )
 
-            Log.i(TAG, "SMS sent to $phoneNumber")
+            Timber.i("SMS sent successfully to %s", phoneNumber)
             true
 
+        } catch (e: SecurityException) {
+            Timber.e(e, "Security exception - missing SEND_SMS permission")
+            false
+        } catch (e: IllegalArgumentException) {
+            Timber.e(e, "Invalid phone number or message: %s", phoneNumber)
+            false
+        } catch (e: IllegalStateException) {
+            Timber.e(e, "SMS manager not available")
+            false
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to send SMS to $phoneNumber", e)
+            Timber.e(e, "Failed to send SMS to %s", phoneNumber)
             false
         }
     }

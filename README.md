@@ -11,6 +11,7 @@ Built for tradespeople, freelancers, and busy professionals who can't afford to 
 - [Overview](#overview)
 - [Features](#features)
 - [Technical Stack](#technical-stack)
+- [Production-Ready Features](#production-ready-features)
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
 - [Building the APK](#building-the-apk)
@@ -19,6 +20,7 @@ Built for tradespeople, freelancers, and busy professionals who can't afford to 
 - [Architecture](#architecture)
 - [Assumptions & Design Decisions](#assumptions--design-decisions)
 - [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
 - [License](#license)
 
 ---
@@ -82,6 +84,61 @@ When you miss a call, the app instantly sends a predefined SMS message to that c
 | **Permissions** | Accompanist Permissions | 0.36.0 |
 | **Target SDK** | Android 15 (API 35) | - |
 | **Minimum SDK** | Android 8.0 (API 26) | - |
+| **Logging** | Timber | 5.0.1 |
+
+---
+
+## Production-Ready Features
+
+### ✅ Release Build Configuration
+
+- **R8/ProGuard** enabled for code minification and resource shrinking
+- **Signing configuration** ready for Play Store deployment
+- **Separate debug/release** build types with proper package separation
+- **Optimized ProGuard rules** for Compose, DataStore, and Coroutines
+
+See [KEYSTORE_SETUP.md](KEYSTORE_SETUP.md) for signing instructions.
+
+### ✅ Comprehensive Testing
+
+- **Unit tests** for core business logic (SmsHandler, AppPreferences)
+- **Test coverage** for validation, debounce, active hours, and limit enforcement
+- **MockK framework** for Android component mocking
+- **Coroutines testing** support
+
+Run tests: `./gradlew test`
+
+### ✅ Production Logging
+
+- **Timber logging** framework integrated
+- **Debug mode**: Verbose logging to Logcat
+- **Release mode**: Warnings and errors only
+- **Structured error handling** with specific exception types
+- Ready for Firebase Crashlytics integration
+
+### ✅ Error Handling
+
+- **Try-catch blocks** in all critical paths
+- **Specific exception handling** (SecurityException, IllegalArgumentException, etc.)
+- **Graceful degradation** when permissions are missing
+- **User-friendly error states** in UI
+
+### ✅ Documentation
+
+- **Comprehensive README** (this file)
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
+- **[PRIVACY_POLICY.md](PRIVACY_POLICY.md)** - Required for Play Store
+- **[KEYSTORE_SETUP.md](KEYSTORE_SETUP.md)** - Release signing guide
+- **[BUILD_NOTES.md](BUILD_NOTES.md)** - Build system notes
+- **Inline code documentation** throughout the codebase
+
+### 🔒 Privacy & Security
+
+- **Zero analytics** - No tracking, no telemetry
+- **Local-only data** - No network connections, no cloud sync
+- **Minimal permissions** - Only what's required for core functionality
+- **Open source** - MIT License, full transparency
+- **GDPR/CCPA compliant** - Privacy-first design
 
 ---
 
@@ -317,6 +374,68 @@ echo "sdk.dir=/path/to/Android/Sdk" > local.properties
 1. Disable battery optimization (critical on Xiaomi, Huawei, OnePlus devices)
 2. Add app to manufacturer's "protected apps" list
 3. Disable "Adaptive Battery" for this app
+
+---
+
+## Documentation
+
+### 📚 Additional Resources
+
+- **[CHANGELOG.md](CHANGELOG.md)** - Complete version history and release notes
+- **[PRIVACY_POLICY.md](PRIVACY_POLICY.md)** - Privacy policy for Play Store compliance
+- **[KEYSTORE_SETUP.md](KEYSTORE_SETUP.md)** - Step-by-step guide for release signing
+- **[BUILD_NOTES.md](BUILD_NOTES.md)** - Build system notes and configuration
+
+### 🚀 Building for Production
+
+1. **Generate a keystore** (first time only):
+   ```bash
+   keytool -genkey -v -keystore release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias release
+   ```
+
+2. **Create keystore.properties** in project root:
+   ```properties
+   storeFile=/absolute/path/to/release.jks
+   storePassword=your_password
+   keyAlias=release
+   keyPassword=your_password
+   ```
+
+3. **Build release APK**:
+   ```bash
+   ./gradlew assembleRelease
+   ```
+
+4. **Find your APK**:
+   ```
+   app/build/outputs/apk/release/app-release.apk
+   ```
+
+See [KEYSTORE_SETUP.md](KEYSTORE_SETUP.md) for detailed instructions.
+
+### 🧪 Running Tests
+
+```bash
+# Run all unit tests
+./gradlew test
+
+# Run tests with coverage
+./gradlew testDebugUnitTest
+
+# Run specific test class
+./gradlew test --tests SmsHandlerTest
+```
+
+### 📱 Play Store Checklist
+
+- ✅ Release APK signed with production keystore
+- ✅ Privacy policy prepared (see PRIVACY_POLICY.md)
+- ✅ Version code incremented
+- ✅ ProGuard rules tested
+- ✅ App tested on multiple devices and Android versions
+- ✅ Screenshots prepared for all required screen sizes
+- ✅ Store listing description written
+- ✅ Feature graphic and app icon ready
 
 ---
 
