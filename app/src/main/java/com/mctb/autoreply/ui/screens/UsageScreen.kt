@@ -80,7 +80,7 @@ fun UsageScreen(navController: NavController) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (usageStatus.isUnlimited)
+                    containerColor = if (usageStatus.isUnlimited || usageStatus.isMasterMode)
                         MaterialTheme.colorScheme.tertiaryContainer
                     else
                         MaterialTheme.colorScheme.surfaceVariant
@@ -92,7 +92,7 @@ fun UsageScreen(navController: NavController) {
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (usageStatus.isUnlimited) {
+                    if (usageStatus.isUnlimited || usageStatus.isMasterMode) {
                         Icon(
                             Icons.Default.CheckCircle,
                             contentDescription = null,
@@ -101,11 +101,23 @@ fun UsageScreen(navController: NavController) {
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = stringResource(R.string.usage_unlimited),
+                            text = if (usageStatus.isMasterMode)
+                                "🔓 Master Mode"
+                            else
+                                stringResource(R.string.usage_unlimited),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )
+                        if (usageStatus.isMasterMode) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Unlimited auto-texts • Developer mode",
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
                     } else {
                         Text(
                             text = "${usageStatus.count} / ${AppPreferences.FREE_TIER_LIMIT}",
@@ -127,7 +139,7 @@ fun UsageScreen(navController: NavController) {
             }
 
             // Free tier info or limit reached warning
-            if (!usageStatus.isUnlimited) {
+            if (!usageStatus.isUnlimited && !usageStatus.isMasterMode) {
                 if (usageStatus.hasReachedLimit) {
                     // Limit reached card
                     Card(

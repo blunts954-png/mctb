@@ -42,6 +42,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +66,11 @@ fun HomeScreen(navController: NavController) {
     // Collect state from DataStore
     val isEnabled by prefs.isEnabled.collectAsState(initial = false)
     val usageStatus by prefs.usageStatus.collectAsState(initial = com.mctb.autoreply.data.UsageStatus(0, false))
+    val isMasterMode by prefs.isMasterMode.collectAsState(initial = false)
+
+    // Secret tap counter for master mode unlock
+    var tapCount by remember { mutableStateOf(0) }
+    var showMasterModeDialog by remember { mutableStateOf(false) }
 
     // Permission handling
     val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -89,7 +95,18 @@ fun HomeScreen(navController: NavController) {
     Scaffold(
         topAppBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) }
+                title = {
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        modifier = Modifier.clickable {
+                            tapCount++
+                            if (tapCount >= 7) {
+                                showMasterModeDialog = true
+                                tapCount = 0
+                            }
+                        }
+                    )
+                }
             )
         }
     ) { paddingValues ->
@@ -107,6 +124,11 @@ fun HomeScreen(navController: NavController) {
 
             // Status card
             StatusCard(isEnabled = isEnabled)
+
+            // Master mode indicator (only shown when enabled)
+            if (isMasterMode) {
+                MasterModeCard()
+            }
 
             // Master enable/disable switch
             Card(
@@ -195,6 +217,38 @@ fun HomeScreen(navController: NavController) {
             dismissButton = {
                 TextButton(onClick = { showLimitDialog = false }) {
                     Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    // Master mode unlock dialog
+    if (showMasterModeDialog) {
+        AlertDialog(
+            onDismissRequest = { showMasterModeDialog = false },
+            title = { Text("Master Mode") },
+            text = {
+                Text(
+                    if (!isMasterMode) {
+                        "Unlock unlimited auto-texts?\n\nThis is a hidden developer feature that bypasses all limits. Perfect for testing and personal use."
+                    } else {
+                        "Master Mode is currently enabled.\n\nYou have unlimited auto-texts. Disable to return to normal mode."
+                    }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    scope.launch {
+                        prefs.setMasterMode(!isMasterMode)
+                    }
+                    showMasterModeDialog = false
+                }) {
+                    Text(if (!isMasterMode) "Enable" else "Disable")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMasterModeDialog = false }) {
+                    Text("Cancel")
                 }
             }
         )
@@ -356,6 +410,43 @@ fun PermissionWarningCard(permissionsState: MultiplePermissionsState) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.grant_permissions))
+            }
+        }
+    }
+}
+
+@Composable
+fun MasterModeCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Column {
+                Text(
+                    text = "🔓 Master Mode Enabled",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    text = "Unlimited auto-texts • Developer mode",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
             }
         }
     }

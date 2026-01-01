@@ -32,6 +32,7 @@ class AppPreferences(private val context: Context) {
         private val KEY_ALWAYS_ON = booleanPreferencesKey("always_on")
         private val KEY_AUTO_TEXT_COUNT = intPreferencesKey("auto_text_count")
         private val KEY_IS_UNLIMITED = booleanPreferencesKey("is_unlimited")
+        private val KEY_MASTER_MODE = booleanPreferencesKey("master_mode") // Hidden developer mode
 
         // Default values
         const val DEFAULT_MESSAGE = "Hi! I missed your call and I'm working right now. I'll call you back as soon as I can. Thanks!"
@@ -53,12 +54,14 @@ class AppPreferences(private val context: Context) {
     val isAlwaysOn: Flow<Boolean> = context.dataStore.data.map { it[KEY_ALWAYS_ON] ?: false }
     val autoTextCount: Flow<Int> = context.dataStore.data.map { it[KEY_AUTO_TEXT_COUNT] ?: 0 }
     val isUnlimited: Flow<Boolean> = context.dataStore.data.map { it[KEY_IS_UNLIMITED] ?: false }
+    val isMasterMode: Flow<Boolean> = context.dataStore.data.map { it[KEY_MASTER_MODE] ?: false }
 
     // Combined flow for usage status
     val usageStatus: Flow<UsageStatus> = context.dataStore.data.map { prefs ->
         val count = prefs[KEY_AUTO_TEXT_COUNT] ?: 0
         val unlimited = prefs[KEY_IS_UNLIMITED] ?: false
-        UsageStatus(count, unlimited)
+        val masterMode = prefs[KEY_MASTER_MODE] ?: false
+        UsageStatus(count, unlimited, masterMode)
     }
 
     // Suspend functions for write operations
@@ -98,6 +101,10 @@ class AppPreferences(private val context: Context) {
         context.dataStore.edit { it[KEY_IS_UNLIMITED] = unlimited }
     }
 
+    suspend fun setMasterMode(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_MASTER_MODE] = enabled }
+    }
+
     // Synchronous read helpers for background service/receiver
     suspend fun isEnabledSync(): Boolean {
         var enabled = false
@@ -123,6 +130,12 @@ class AppPreferences(private val context: Context) {
         return unlimited
     }
 
+    suspend fun isMasterModeSync(): Boolean {
+        var masterMode = false
+        context.dataStore.data.map { it[KEY_MASTER_MODE] ?: false }.collect { masterMode = it }
+        return masterMode
+    }
+
     suspend fun getAutoTextCountSync(): Int {
         var count = 0
         context.dataStore.data.map { it[KEY_AUTO_TEXT_COUNT] ?: 0 }.collect { count = it }
@@ -131,8 +144,12 @@ class AppPreferences(private val context: Context) {
 
     /**
      * Check if we've reached the free tier limit.
+     * Master mode bypasses all limits.
      */
     suspend fun hasReachedLimit(): Boolean {
+        // Master mode has no limits
+        if (isMasterModeSync()) return false
+
         val unlimited = isUnlimitedSync()
         val count = getAutoTextCountSync()
         return !unlimited && count >= FREE_TIER_LIMIT
@@ -196,8 +213,9 @@ class AppPreferences(private val context: Context) {
  */
 data class UsageStatus(
     val count: Int,
-    val isUnlimited: Boolean
+    val isUnlimited: Boolean,
+    val isMasterMode: Boolean = false
 ) {
     val hasReachedLimit: Boolean
-        get() = !isUnlimited && count >= AppPreferences.FREE_TIER_LIMIT
+        get() = !isMasterMode && !isUnlimited && count >= AppPreferences.FREE_TIER_LIMIT
 }
