@@ -31,15 +31,23 @@ class CallReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
-        if (context == null || intent == null) return
+        Log.i(TAG, "=== onReceive TRIGGERED === Action: ${intent?.action}")
 
-        if (intent.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED) return
+        if (context == null || intent == null) {
+            Log.e(TAG, "Context or Intent is null!")
+            return
+        }
+
+        if (intent.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED) {
+            Log.w(TAG, "Wrong action: ${intent.action}")
+            return
+        }
 
         try {
             val state = intent.getStringExtra(TelephonyManager.EXTRA_STATE)
             val phoneNumber = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
 
-            Log.d(TAG, "Phone state changed: $state, Number: $phoneNumber")
+            Log.i(TAG, "=== PHONE STATE: $state | Number from intent: $phoneNumber ===")
 
             when (state) {
                 TelephonyManager.EXTRA_STATE_RINGING -> {

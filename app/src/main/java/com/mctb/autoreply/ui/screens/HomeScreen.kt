@@ -5,6 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
@@ -53,6 +56,8 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.mctb.autoreply.R
 import com.mctb.autoreply.data.AppPreferences
 import com.mctb.autoreply.service.CallMonitorService
+import com.mctb.autoreply.util.SmsHandler
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
@@ -171,6 +176,9 @@ fun HomeScreen(navController: NavController) {
                 onMessageEditorClick = { navController.navigate("message_editor") },
                 onActiveHoursClick = { navController.navigate("active_hours") }
             )
+
+            // Debug Section
+            DebugCard(prefs = prefs, scope = scope, context = context)
 
             // Battery optimization reminder
             if (isEnabled) {
@@ -402,6 +410,121 @@ fun BatteryOptimizationCard() {
             ) {
                 Text(stringResource(R.string.disable_optimization))
             }
+        }
+    }
+}
+
+@Composable
+fun DebugCard(prefs: AppPreferences, scope: CoroutineScope, context: android.content.Context) {
+    var testStatus by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+
+    OutlinedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    Icons.Default.BugReport,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = "Debug & Testing",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            if (testStatus.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = testStatus,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            FilledTonalButton(
+                onClick = {
+                    isLoading = true
+                    testStatus = "Testing SMS functionality..."
+                    Log.i("DebugCard", "=== MANUAL TEST STARTED ===")
+
+                    scope.launch {
+                        try {
+                            // Check all settings
+                            val enabled = prefs.isEnabledSync()
+                            val alwaysOn = prefs.isAlwaysOnSync()
+                            val message = prefs.getMessageSync()
+                            val count = prefs.getAutoTextCountSync()
+                            val unlimited = prefs.isUnlimitedSync()
+
+                            Log.i("DebugCard", "Enabled: $enabled")
+                            Log.i("DebugCard", "AlwaysOn: $alwaysOn")
+                            Log.i("DebugCard", "Message: $message")
+                            Log.i("DebugCard", "Count: $count")
+                            Log.i("DebugCard", "Unlimited: $unlimited")
+
+                            testStatus = "Enabled: $enabled\nAlwaysOn: $alwaysOn\nMessage length: ${message.length}\nCount: $count/$5"
+
+                            // Test SMS handler with a fake number
+                            val smsHandler = SmsHandler(context)
+                            val testNumber = "1234567890"
+                            Log.i("DebugCard", "Testing SMS to: $testNumber")
+
+                            val result = smsHandler.processMissedCall(testNumber)
+
+                            Log.i("DebugCard", "=== TEST RESULT: $result ===")
+
+                            testStatus = if (result) {
+                                "✅ TEST PASSED!\nSMS sent successfully\nCheck logs for details"
+                            } else {
+                                "❌ TEST FAILED\nSMS was not sent\nCheck logs for reason"
+                            }
+
+                            Toast.makeText(
+                                context,
+                                if (result) "Test SMS sent!" else "Test failed - check logs",
+                                Toast.LENGTH_LONG
+                            ).show()
+
+                        } catch (e: Exception) {
+                            Log.e("DebugCard", "Test error", e)
+                            testStatus = "❌ ERROR: ${e.message}"
+                            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading
+            ) {
+                Icon(Icons.Default.BugReport, contentDescription = null)
+                Spacer(modifier = Modifier.padding(4.dp))
+                Text(if (isLoading) "Running Test..." else "Test SMS Sending")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Note: Check logcat with tag 'DebugCard', 'SmsHandler', and 'CallReceiver' for detailed info",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

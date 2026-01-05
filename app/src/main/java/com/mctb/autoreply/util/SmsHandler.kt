@@ -27,63 +27,93 @@ class SmsHandler(private val context: Context) {
      */
     suspend fun processMissedCall(phoneNumber: String): Boolean {
         try {
+            Log.i(TAG, "===========================================")
             Log.i(TAG, "Processing missed call from: $phoneNumber")
+            Log.i(TAG, "===========================================")
 
             // Validate phone number
-            if (!isValidPhoneNumber(phoneNumber)) {
-                Log.w(TAG, "Invalid or blocked phone number: $phoneNumber")
+            Log.d(TAG, "Step 1: Validating phone number...")
+            val isValid = isValidPhoneNumber(phoneNumber)
+            Log.d(TAG, "Phone number valid: $isValid")
+            if (!isValid) {
+                Log.w(TAG, "❌ FAILED: Invalid or blocked phone number: $phoneNumber")
                 return false
             }
 
             // Check if app is enabled
-            if (!prefs.isEnabledSync()) {
-                Log.d(TAG, "Auto-reply is disabled")
+            Log.d(TAG, "Step 2: Checking if app is enabled...")
+            val enabled = prefs.isEnabledSync()
+            Log.d(TAG, "App enabled: $enabled")
+            if (!enabled) {
+                Log.w(TAG, "❌ FAILED: Auto-reply is disabled")
                 return false
             }
 
             // Check active hours
-            if (!prefs.isWithinActiveHours()) {
-                Log.d(TAG, "Outside active hours")
+            Log.d(TAG, "Step 3: Checking active hours...")
+            val withinHours = prefs.isWithinActiveHours()
+            Log.d(TAG, "Within active hours: $withinHours")
+            if (!withinHours) {
+                Log.w(TAG, "❌ FAILED: Outside active hours")
                 return false
             }
 
             // Check free tier limit
-            if (prefs.hasReachedLimit()) {
-                Log.w(TAG, "Free tier limit reached")
+            Log.d(TAG, "Step 4: Checking free tier limit...")
+            val reachedLimit = prefs.hasReachedLimit()
+            val count = prefs.getAutoTextCountSync()
+            Log.d(TAG, "Reached limit: $reachedLimit (count: $count)")
+            if (reachedLimit) {
+                Log.w(TAG, "❌ FAILED: Free tier limit reached")
                 return false
             }
 
             // Check debounce
-            if (!prefs.canSendToNumber(phoneNumber)) {
-                Log.d(TAG, "Recently texted this number, skipping (debounce)")
+            Log.d(TAG, "Step 5: Checking debounce...")
+            val canSend = prefs.canSendToNumber(phoneNumber)
+            Log.d(TAG, "Can send to number: $canSend")
+            if (!canSend) {
+                Log.w(TAG, "❌ FAILED: Recently texted this number, skipping (debounce)")
                 return false
             }
 
             // Get message
+            Log.d(TAG, "Step 6: Getting message...")
             val message = prefs.getMessageSync()
+            Log.d(TAG, "Message: '$message' (length: ${message.length})")
             if (message.isBlank()) {
-                Log.w(TAG, "Message is blank, cannot send")
+                Log.w(TAG, "❌ FAILED: Message is blank, cannot send")
                 return false
             }
 
             // Send SMS
+            Log.d(TAG, "Step 7: Sending SMS...")
             val success = sendSms(phoneNumber, message)
 
+            Log.d(TAG, "SMS send result: $success")
+
             if (success) {
+                Log.d(TAG, "Step 8: Incrementing usage counter...")
                 // Increment usage counter
                 prefs.incrementAutoTextCount()
 
                 // Record that we texted this number
                 prefs.recordTextSent(phoneNumber)
 
-                val count = prefs.getAutoTextCountSync()
-                Log.i(TAG, "Auto-reply sent successfully. Total count: $count")
+                val newCount = prefs.getAutoTextCountSync()
+                Log.i(TAG, "✅ SUCCESS: Auto-reply sent successfully!")
+                Log.i(TAG, "Total usage count: $newCount")
+                Log.i(TAG, "===========================================")
+            } else {
+                Log.w(TAG, "❌ FAILED: SMS send returned false")
+                Log.i(TAG, "===========================================")
             }
 
             return success
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error processing missed call", e)
+            Log.e(TAG, "❌ EXCEPTION: Error processing missed call", e)
+            Log.i(TAG, "===========================================")
             return false
         }
     }
