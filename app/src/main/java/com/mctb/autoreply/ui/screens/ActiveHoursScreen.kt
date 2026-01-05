@@ -27,6 +27,7 @@ import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,13 +58,20 @@ fun ActiveHoursScreen(navController: NavController) {
     val startMinute by prefs.startMinute.collectAsState(initial = AppPreferences.DEFAULT_START_MINUTE)
     val endHour by prefs.endHour.collectAsState(initial = AppPreferences.DEFAULT_END_HOUR)
     val endMinute by prefs.endMinute.collectAsState(initial = AppPreferences.DEFAULT_END_MINUTE)
-    val isAlwaysOn by prefs.isAlwaysOn.collectAsState(initial = false)
+    val isAlwaysOn by prefs.isAlwaysOn.collectAsState(initial = true)
 
     var localAlwaysOn by remember { mutableStateOf(isAlwaysOn) }
     var localStartHour by remember { mutableStateOf(startHour) }
     var localStartMinute by remember { mutableStateOf(startMinute) }
     var localEndHour by remember { mutableStateOf(endHour) }
     var localEndMinute by remember { mutableStateOf(endMinute) }
+
+    // Sync local state with Flow values
+    LaunchedEffect(isAlwaysOn) { localAlwaysOn = isAlwaysOn }
+    LaunchedEffect(startHour) { localStartHour = startHour }
+    LaunchedEffect(startMinute) { localStartMinute = startMinute }
+    LaunchedEffect(endHour) { localEndHour = endHour }
+    LaunchedEffect(endMinute) { localEndMinute = endMinute }
 
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }

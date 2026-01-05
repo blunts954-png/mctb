@@ -44,13 +44,13 @@ class AppPreferences(private val context: Context) {
     }
 
     // Flows for reactive UI updates
-    val isEnabled: Flow<Boolean> = context.dataStore.data.map { it[KEY_ENABLED] ?: false }
+    val isEnabled: Flow<Boolean> = context.dataStore.data.map { it[KEY_ENABLED] ?: true }
     val message: Flow<String> = context.dataStore.data.map { it[KEY_MESSAGE] ?: DEFAULT_MESSAGE }
     val startHour: Flow<Int> = context.dataStore.data.map { it[KEY_START_HOUR] ?: DEFAULT_START_HOUR }
     val startMinute: Flow<Int> = context.dataStore.data.map { it[KEY_START_MINUTE] ?: DEFAULT_START_MINUTE }
     val endHour: Flow<Int> = context.dataStore.data.map { it[KEY_END_HOUR] ?: DEFAULT_END_HOUR }
     val endMinute: Flow<Int> = context.dataStore.data.map { it[KEY_END_MINUTE] ?: DEFAULT_END_MINUTE }
-    val isAlwaysOn: Flow<Boolean> = context.dataStore.data.map { it[KEY_ALWAYS_ON] ?: false }
+    val isAlwaysOn: Flow<Boolean> = context.dataStore.data.map { it[KEY_ALWAYS_ON] ?: true }
     val autoTextCount: Flow<Int> = context.dataStore.data.map { it[KEY_AUTO_TEXT_COUNT] ?: 0 }
     val isUnlimited: Flow<Boolean> = context.dataStore.data.map { it[KEY_IS_UNLIMITED] ?: false }
 
@@ -100,8 +100,8 @@ class AppPreferences(private val context: Context) {
 
     // Synchronous read helpers for background service/receiver
     suspend fun isEnabledSync(): Boolean {
-        var enabled = false
-        context.dataStore.data.map { it[KEY_ENABLED] ?: false }.collect { enabled = it }
+        var enabled = true
+        context.dataStore.data.map { it[KEY_ENABLED] ?: true }.collect { enabled = it }
         return enabled
     }
 
@@ -112,8 +112,8 @@ class AppPreferences(private val context: Context) {
     }
 
     suspend fun isAlwaysOnSync(): Boolean {
-        var alwaysOn = false
-        context.dataStore.data.map { it[KEY_ALWAYS_ON] ?: false }.collect { alwaysOn = it }
+        var alwaysOn = true
+        context.dataStore.data.map { it[KEY_ALWAYS_ON] ?: true }.collect { alwaysOn = it }
         return alwaysOn
     }
 

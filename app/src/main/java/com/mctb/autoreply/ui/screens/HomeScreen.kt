@@ -63,7 +63,8 @@ fun HomeScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
 
     // Collect state from DataStore
-    val isEnabled by prefs.isEnabled.collectAsState(initial = false)
+    val isEnabled by prefs.isEnabled.collectAsState(initial = true)
+    val isAlwaysOn by prefs.isAlwaysOn.collectAsState(initial = true)
     val usageStatus by prefs.usageStatus.collectAsState(initial = com.mctb.autoreply.data.UsageStatus(0, false))
 
     // Permission handling
@@ -106,7 +107,7 @@ fun HomeScreen(navController: NavController) {
             }
 
             // Status card
-            StatusCard(isEnabled = isEnabled)
+            StatusCard(isEnabled = isEnabled, isAlwaysOn = isAlwaysOn)
 
             // Master enable/disable switch
             Card(
@@ -202,7 +203,7 @@ fun HomeScreen(navController: NavController) {
 }
 
 @Composable
-fun StatusCard(isEnabled: Boolean) {
+fun StatusCard(isEnabled: Boolean, isAlwaysOn: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -228,10 +229,11 @@ fun StatusCard(isEnabled: Boolean) {
                     MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = if (isEnabled)
-                    stringResource(R.string.status_active)
-                else
-                    stringResource(R.string.status_inactive),
+                text = when {
+                    !isEnabled -> stringResource(R.string.status_inactive)
+                    isAlwaysOn -> stringResource(R.string.status_active_24_7)
+                    else -> stringResource(R.string.status_active_hours)
+                },
                 style = MaterialTheme.typography.bodyLarge
             )
         }
