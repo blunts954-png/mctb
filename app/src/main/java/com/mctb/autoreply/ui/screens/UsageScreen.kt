@@ -54,7 +54,7 @@ fun UsageScreen(navController: NavController) {
     )
 
     Scaffold(
-        topAppBar = {
+        topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.usage_title)) },
                 navigationIcon = {

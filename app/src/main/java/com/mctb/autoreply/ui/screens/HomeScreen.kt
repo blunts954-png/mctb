@@ -93,7 +93,7 @@ fun HomeScreen(navController: NavController) {
     var showLimitDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        topAppBar = {
+        topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) }
             )

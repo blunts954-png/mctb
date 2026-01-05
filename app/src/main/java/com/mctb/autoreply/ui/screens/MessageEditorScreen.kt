@@ -56,7 +56,7 @@ fun MessageEditorScreen(navController: NavController) {
     val charCount = messageText.length
 
     Scaffold(
-        topAppBar = {
+        topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.message_editor_title)) },
                 navigationIcon = {

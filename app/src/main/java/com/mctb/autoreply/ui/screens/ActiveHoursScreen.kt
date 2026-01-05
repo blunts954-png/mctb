@@ -77,7 +77,7 @@ fun ActiveHoursScreen(navController: NavController) {
     var showEndTimePicker by remember { mutableStateOf(false) }
 
     Scaffold(
-        topAppBar = {
+        topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.active_hours_title)) },
                 navigationIcon = {
